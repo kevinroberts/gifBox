@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket demo</title>
+</head>
+
+<body>
+    <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+
+    <style type="text/css">
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        filter: alpha(opacity=50);
+        -moz-opacity: 0.5;
+        opacity: 0.5;
+    }
+
+    #overlay span {
+        font-size: 1.2rem;
+        padding: 8px;
+        border-radius: 5px;
+        color: #fff9f9;
+        background-color: #2f74e2;
+        position: relative;
+        top: 50%;
+    }
+    </style>
+    <script>
+    var ws = new WebSocket("ws://127.0.0.1:5678/");
+
+    ws.onmessage = function(event) {
+        $('#overlay').show();
+        var embed = document.getElementById('giphy-embed');
+        var overlayText = document.getElementById('overlay-text');
+        console.log('updaing giphy with new url ' + event.data);
+        var result = JSON.parse(event.data)
+        embed.src = result.embed_url;
+        overlayText.innerHTML = "Loading " + result.query + " gifs..."
+        $('#overlay').delay(500).fadeOut();
+    };
+    </script>
+    <div style="width:100%;height:0;padding-bottom:56%;position:relative;">
+        <iframe id="giphy-embed" src="https://giphy.com/embed/jAYUbVXgESSti" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+    </div>
+    <div id="overlay">
+        <span id="overlay-text">Loading next Gifs...</span>
+    </div>
+    <p><a href="https://giphy.com/gifs/google-icon-loading-jAYUbVXgESSti">via GIPHY</a></p>
+</body>
+
+</html>
