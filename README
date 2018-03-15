@@ -7,4 +7,4 @@ Requires the raspberry pi 3 with the Google AIY voice kit.
  - Launch the websocket-server.py
  - Launch google-voice-service.py
  - Load the html page in a browser and set it to full screen.
- - press the button your AIY kit and say `search whatever` and the browswer will refresh with a new Giphy. :sparkles: 
+ - press the button on your AIY kit and say `search puppies` and the browswer will refresh with a Giphy puppies! :sparkles: :dog:
