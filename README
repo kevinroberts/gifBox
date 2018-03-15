@@ -4,7 +4,8 @@ The greatest box on earth.
 
 ## Instructions
 Requires the raspberry pi 3 with the Google AIY voice kit.
+ - create a config.py with your api_key from giphy
  - Launch the websocket-server.py
  - Launch google-voice-service.py
  - Load the html page in a browser and set it to full screen.
- - press the button on your AIY kit and say `search puppies` and the browswer will refresh with a Giphy puppies! :sparkles: :dog:
+ - press the button on your AIY kit and say `search puppies` and the browswer will refresh with Giphy puppies! :sparkles: :dog:
