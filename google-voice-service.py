@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from multiprocessing import Process
 # Google Voice service
 import asyncio
 import datetime
@@ -15,12 +15,16 @@ import sys
 import threading
 from giphy_client.rest import ApiException
 import pprint
+import websockets
 # Import Google AIY and Voice Assitant libs
 import aiy.assistant.auth_helpers
 from aiy.assistant.library import Assistant
 import aiy.audio
 import aiy.voicehat
 from google.assistant.library.event import EventType
+
+lastLoadedQuery = ''
+lastLoadedTime = 0
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,23 +55,35 @@ rating = 'g' # str | Filters results by specified rating. (optional)
 lang = 'en' # str | Specify default country for regional content; use a 2-letter ISO 639-1 country code. See list of supported languages <a href = \"../language-support\">here</a>. (optional)
 fmt = 'json' # str | Used to indicate the expected response format. Default is Json. (optional) (default to json)
 
-
 def getGiphy(query):
-	try: 
-    	# Search Endpoint
-		api_response = api_instance.gifs_search_get(api_key, query, limit=limit, offset=offset, rating=rating, lang=lang, fmt=fmt)
-		# Pick a random gif from the response
-		randomGif = random.choice(api_response.data)
-		data = {}
-		data['embed_url'] = randomGif.embed_url
-		#data['tags'] = randomGif.tags
-		data['query'] = query
-		pprint.pprint(data)
-		return(data)
-	except ApiException as e:
-		print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
-		return('')
+    default_return_obj = {'query' : 'kittens', 'timestamp' : 0, 'embed_url' : ['https://giphy.com/embed/DBucugVBKhvTW'] }
+    try: 
+        # Search Endpoint
+        api_response = api_instance.gifs_search_get(api_key, query, limit=limit, offset=offset, rating=rating, lang=lang, fmt=fmt)
+        embedUrls = []
+        for elem in api_response.data:
+            embedUrls.append(elem.embed_url)
+        data = {}
+        data['embed_url'] = embedUrls
+        data['query'] = query
+        data['timestamp'] = time.time()
+        pprint.pprint(data)
+        return(data)
+    except ApiException as e:
+        print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
+        return(default_return_obj)
+    except IndexError as e:
+        print('empty response from giphy returned %s\n' % e)
+        return(default_return_obj)
 
+def getGiphyFromFile() :
+    try:
+        with open('giphySearch.json', 'r') as json_file:
+            data = json.load(json_file)
+            return(data)
+    except json.decoder.JSONDecodeError as e:
+        print('Caught exception - JSON file incomplete')
+        return({'query' : lastLoadedQuery, 'timestamp': 0, 'embed_url' : []})
 
 def searchAndWriteGiphy(query):
 	with open('giphySearch.json', 'w') as outfile:
@@ -157,12 +173,37 @@ class MyAssistant(object) :
         if self._can_start_conversation:
             self._assistant.start_conversation()
 
+async def timedGiphy(websocket, path):
+	while True:
+		global lastLoadedQuery
+		global lastLoadedTime
+		time.sleep(.5)
+		loadedJSON = getGiphyFromFile()
+		if lastLoadedTime != loadedJSON['timestamp'] and len(loadedJSON['embed_url']) > 0:
+			print('new query has been made: ' + loadedJSON['query'])
+			lastLoadedQuery = loadedJSON['query']
+			lastLoadedTime = loadedJSON['timestamp']
+			await websocket.send(json.dumps(loadedJSON, indent=4))
+		await asyncio.sleep(random.random())
 
-		
-def main():
+def websocketServer():
+    print('Starting websocket server on port 5678')
+    start_server = websockets.serve(timedGiphy, '127.0.0.1', 5678)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
+
+def startGoogleVoice():
     print('Starting google voice service...')
     MyAssistant().start()
     
 
 if __name__ == "__main__":
-    main()
+    firstLoad = getGiphyFromFile()
+    lastLoadedQuery = firstLoad['query']
+    lastLoadedTime = firstLoad['timestamp']
+    print('first loaded query = ' + firstLoad['query'])
+    p1 = Process(target=websocketServer)
+    p1.start()
+    #p2 = Process(target=startGoogleVoice)
+    #p2.start()
+    startGoogleVoice()

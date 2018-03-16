@@ -36,17 +36,40 @@
     </style>
     <script>
     var ws = new WebSocket("ws://127.0.0.1:5678/");
+    var interval = setInterval(loadNewGiphy, 10000);
+    var embedUrls = [];
 
     ws.onmessage = function(event) {
         $('#overlay').show();
         var embed = document.getElementById('giphy-embed');
         var overlayText = document.getElementById('overlay-text');
-        console.log('updaing giphy with new url ' + event.data);
+        console.log('received new websocket msg ' + event.data);
         var result = JSON.parse(event.data)
-        embed.src = result.embed_url;
-        overlayText.innerHTML = "Loading " + result.query + " gifs..."
-        $('#overlay').delay(800).fadeOut();
+	if (result.embed_url && result.embed_url.length > 0) {
+		embedUrls = result.embed_url;
+		// get random url from list
+		var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
+		console.log('chose new embed url: ', item);
+		embed.src = item;
+        	overlayText.innerHTML = "Loading " + result.query + " gifs..."
+        	$('#overlay').delay(800).fadeOut();
+	} else {
+		overlayText.innerHTML = "Could not find " + result.query + " gifs..."
+        	$('#overlay').delay(800).fadeOut();
+	}
+        
     };
+
+	function loadNewGiphy() {
+		console.log("loading a new gif url if available");
+		if (embedUrls && embedUrls.length > 0) {
+			var embed = document.getElementById('giphy-embed');
+			var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
+			console.log('chose new embed url: ', item);
+			embed.src = item;
+        	}
+	}
+
     </script>
     <div style="width:100%;height:0;padding-bottom:56%;position:relative;">
         <iframe id="giphy-embed" src="https://giphy.com/embed/jAYUbVXgESSti" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
