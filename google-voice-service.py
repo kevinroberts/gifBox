@@ -13,6 +13,7 @@ import platform
 import subprocess
 import sys
 import threading
+from subprocess import Popen
 from giphy_client.rest import ApiException
 import pprint
 import websockets
@@ -45,22 +46,23 @@ def say_ip():
     ip_address = subprocess.check_output("hostname -I | cut -d' ' -f1", shell=True)
     aiy.audio.say('My IP address is %s' % ip_address.decode('utf-8'))
 
-
-# create an instance of the Giphy API class
-api_instance = giphy_client.DefaultApi()
-api_key = config.api_key # str | Giphy API Key.
-limit = 25 # int | The maximum number of records to return. (optional) (default to 25)
-offset = 0 # int | An optional results offset. Defaults to 0. (optional) (default to 0)
-rating = 'g' # str | Filters results by specified rating. (optional)
-lang = 'en' # str | Specify default country for regional content; use a 2-letter ISO 639-1 country code. See list of supported languages <a href = \"../language-support\">here</a>. (optional)
-fmt = 'json' # str | Used to indicate the expected response format. Default is Json. (optional) (default to json)
+def launchChrome():
+    Popen(['/usr/bin/chromium-browser', '--start-fullscreen', 'websocket-client.html'])
 
 def getGiphy(query):
     default_return_obj = {'query' : 'kittens', 'timestamp' : 0, 'embed_url' : ['https://giphy.com/embed/DBucugVBKhvTW'] }
-    try: 
-        # Search Endpoint
+    try:
+        # create an instance of the Giphy API class
+        api_instance = giphy_client.DefaultApi()
+        api_key = config.api_key # str | Giphy API Key.
+        limit = 25 # int | The maximum number of records to return. (optional) (default to 25)
+        offset = 0 # int | An optional results offset. Defaults to 0. (optional) (default to 0)
+        rating = 'g' # str | Filters results by specified rating. (optional)
+        lang = 'en' # str | Specify default country for regional content; use a 2-letter ISO 639-1 country code. See list of supported languages <a href = \"../language-support\">here</a>. (optional)
+        fmt = 'json' # str | Used to indicate the expected response format. Default is Json. (optional) (default to json)
         api_response = api_instance.gifs_search_get(api_key, query, limit=limit, offset=offset, rating=rating, lang=lang, fmt=fmt)
         embedUrls = []
+        # Loop through gifs and create array of embed urls
         for elem in api_response.data:
             embedUrls.append(elem.embed_url)
         data = {}
@@ -144,7 +146,7 @@ class MyAssistant(object) :
                 if len(text) > 7:
                     gifToSearch = text[7:]
                     self._assistant.stop_conversation()
-                    aiy.audio.say('You requested giphy results for ' + gifToSearch)
+                    #aiy.audio.say('You requested giphy results for ' + gifToSearch)
                     searchAndWriteGiphy(gifToSearch)
                 else:
                     aiy.audio.say('Invalid search. Please try again.')
@@ -188,7 +190,8 @@ async def timedGiphy(websocket, path):
 
 def websocketServer():
     print('Starting websocket server on port 5678')
-    start_server = websockets.serve(timedGiphy, '127.0.0.1', 5678)
+    start_server = websockets.serve(timedGiphy, '127.0.0.1', 5678) 
+    launchChrome()
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 

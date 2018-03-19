@@ -39,14 +39,21 @@
     var interval = setInterval(loadNewGiphy, 10000);
     var embedUrls = [];
 
+    ws.onerror = function(event) {
+	var overlayText = document.getElementById('overlay-text');
+	overlayText.innerHTML = "Websocket connection error";	
+    }
+	
     ws.onmessage = function(event) {
-        $('#overlay').show();
+        clearInterval(interval);
+	$('#overlay').show();
         var embed = document.getElementById('giphy-embed');
         var overlayText = document.getElementById('overlay-text');
         console.log('received new websocket msg ' + event.data);
         var result = JSON.parse(event.data)
 	if (result.embed_url && result.embed_url.length > 0) {
 		embedUrls = result.embed_url;
+		interval = setInterval(loadNewGiphy, 10000);
 		// get random url from list
 		var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
 		console.log('chose new embed url: ', item);
