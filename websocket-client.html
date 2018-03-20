@@ -53,7 +53,7 @@
         var result = JSON.parse(event.data)
 	if (result.embed_url && result.embed_url.length > 0) {
 		embedUrls = result.embed_url;
-		interval = setInterval(loadNewGiphy, 10000);
+		interval = setInterval(loadNewGiphy, 8000);
 		// get random url from list
 		var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
 		console.log('chose new embed url: ', item);

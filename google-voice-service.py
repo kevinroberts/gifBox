@@ -78,6 +78,30 @@ def getGiphy(query):
         print('empty response from giphy returned %s\n' % e)
         return(default_return_obj)
 
+def getTrending():
+    default_return_obj = {'query' : 'kittens', 'timestamp' : 0, 'embed_url' : ['https://giphy.com/embed/DBucugVBKhvTW'] }
+    try:
+        # create an instance of the Giphy API class
+        api_instance = giphy_client.DefaultApi()
+        api_key = config.api_key # str | Giphy API Key.
+        api_response = api_instance.gifs_trending_get(api_key)
+        embedUrls = []
+        # Loop through gifs and create array of embed urls
+        for elem in api_response.data:
+            embedUrls.append(elem.embed_url)
+        data = {}
+        data['embed_url'] = embedUrls
+        data['query'] = 'Trending'
+        data['timestamp'] = time.time()
+        pprint.pprint(data)
+        return(data)
+    except ApiException as e:
+        print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
+        return(default_return_obj)
+    except IndexError as e:
+        print('empty response from giphy returned %s\n' % e)
+        return(default_return_obj)
+
 def getGiphyFromFile() :
     try:
         with open('giphySearch.json', 'r') as json_file:
@@ -90,6 +114,10 @@ def getGiphyFromFile() :
 def searchAndWriteGiphy(query):
 	with open('giphySearch.json', 'w') as outfile:
 		json.dump(getGiphy(query), outfile)
+
+def searchAndWriteTrending():
+	with open('giphySearch.json', 'w') as outfile:
+		json.dump(getTrending(), outfile)
 
 class MyAssistant(object) :
     """An assistant that runs in the background.
@@ -142,11 +170,15 @@ class MyAssistant(object) :
             elif text == 'ip address':
                 self._assistant.stop_conversation()
                 say_ip()
+            elif text.startswith('get trending'):
+                self._assistant.stop_conversation()
+                aiy.audio.say('Getting currently trending giphy results');
+                searchAndWriteTrending()
             elif text.startswith('search'):
                 if len(text) > 7:
                     gifToSearch = text[7:]
                     self._assistant.stop_conversation()
-                    #aiy.audio.say('You requested giphy results for ' + gifToSearch)
+                    aiy.audio.say('You requested giphy results for ' + gifToSearch)
                     searchAndWriteGiphy(gifToSearch)
                 else:
                     aiy.audio.say('Invalid search. Please try again.')
