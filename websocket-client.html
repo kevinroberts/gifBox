@@ -2,15 +2,11 @@
 <html>
 
 <head>
-    <title>WebSocket demo</title>
+    <title>Gifbox demo</title>
 </head>
 
 <body>
-    <script
-  src="https://code.jquery.com/jquery-3.3.1.min.js"
-  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-  crossorigin="anonymous"></script>
-
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <style type="text/css">
     #overlay {
         position: fixed;
@@ -38,45 +34,54 @@
     var ws = new WebSocket("ws://127.0.0.1:5678/");
     var interval = setInterval(loadNewGiphy, 10000);
     var embedUrls = [];
+    var mp3s = ['anotha-one.mp3', 'anotha-one-2.mp3', 'anotha-one-3.mp3', 'another-one-hd.mp3'];
 
     ws.onerror = function(event) {
-	var overlayText = document.getElementById('overlay-text');
-	overlayText.innerHTML = "Websocket connection error";	
+        var overlayText = document.getElementById('overlay-text');
+        overlayText.innerHTML = "Websocket connection error";
     }
-	
+
     ws.onmessage = function(event) {
         clearInterval(interval);
-	$('#overlay').show();
+        $('#overlay').show();
+        playNewSound();
         var embed = document.getElementById('giphy-embed');
         var overlayText = document.getElementById('overlay-text');
         console.log('received new websocket msg ' + event.data);
         var result = JSON.parse(event.data)
-	if (result.embed_url && result.embed_url.length > 0) {
-		embedUrls = result.embed_url;
-		interval = setInterval(loadNewGiphy, 8000);
-		// get random url from list
-		var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
-		console.log('chose new embed url: ', item);
-		embed.src = item;
-        	overlayText.innerHTML = "Loading " + result.query + " gifs..."
-        	$('#overlay').delay(800).fadeOut();
-	} else {
-		overlayText.innerHTML = "Could not find " + result.query + " gifs..."
-        	$('#overlay').delay(800).fadeOut();
-	}
-        
+        if (result.embed_url && result.embed_url.length > 0) {
+            embedUrls = result.embed_url;
+            interval = setInterval(loadNewGiphy, 8000);
+            // get random url from list
+            var item = embedUrls[Math.floor(Math.random() * embedUrls.length)];
+            console.log('chose new embed url: ', item);
+            embed.src = item;
+            overlayText.innerHTML = "Loading " + result.query + " gifs..."
+            $('#overlay').delay(900).fadeOut();
+        } else {
+            overlayText.innerHTML = "Could not find " + result.query + " gifs..."
+            $('#overlay').delay(900).fadeOut();
+        }
+
     };
 
-	function loadNewGiphy() {
-		console.log("loading a new gif url if available");
-		if (embedUrls && embedUrls.length > 0) {
-			var embed = document.getElementById('giphy-embed');
-			var item = embedUrls[Math.floor(Math.random()*embedUrls.length)];
-			console.log('chose new embed url: ', item);
-			embed.src = item;
-        	}
-	}
+    function playNewSound() {
+        var sound = document.getElementById("audioElement");
+        var randomSound = mp3s[Math.floor(Math.random() * mp3s.length)];
+        sound.src = 'http://127.0.0.1:8080/' + randomSound;
+        sound.play();
+    }
 
+    function loadNewGiphy() {
+        console.log("loading a new gif url if available");
+        if (embedUrls && embedUrls.length > 0) {
+            var embed = document.getElementById('giphy-embed');
+            var item = embedUrls[Math.floor(Math.random() * embedUrls.length)];
+            console.log('chose new embed url: ', item);
+            embed.src = item;
+            playNewSound();
+        }
+    }
     </script>
     <div style="width:100%;height:0;padding-bottom:56%;position:relative;">
         <iframe id="giphy-embed" src="https://giphy.com/embed/jAYUbVXgESSti" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
@@ -85,6 +90,9 @@
         <span id="overlay-text">Loading next Gifs...</span>
     </div>
     <p><a href="https://giphy.com/gifs/google-icon-loading-jAYUbVXgESSti">via GIPHY</a></p>
+    <audio id="audioElement" src="http://127.0.0.1:8080/imDj.mp3" autoplay>
+        <p>If you are reading this, it is because your browser does not support the audio element. </p>
+    </audio>
 </body>
 
 </html>

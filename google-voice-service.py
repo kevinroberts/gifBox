@@ -230,7 +230,9 @@ def websocketServer():
 def startGoogleVoice():
     print('Starting google voice service...')
     MyAssistant().start()
-    
+
+def fileServer():
+    Popen(['/home/pi/.local/bin/twistd', '-no', 'web', '--path=./web'])
 
 if __name__ == "__main__":
     firstLoad = getGiphyFromFile()
@@ -239,6 +241,6 @@ if __name__ == "__main__":
     print('first loaded query = ' + firstLoad['query'])
     p1 = Process(target=websocketServer)
     p1.start()
-    #p2 = Process(target=startGoogleVoice)
-    #p2.start()
+    p2 = Process(target=fileServer)
+    p2.start()
     startGoogleVoice()
